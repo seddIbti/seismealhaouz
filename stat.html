@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques Séisme 2023</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            background-color: #f4f6f7;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 400px !important;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+            color: #2980b9;
+        }
+
+        /* Hover effects for statistics */
+        .chart-container:hover {
+            background-color: #3498db;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Statistiques du Séisme de 2023 - Al Haouz</h1>
+
+    <!-- Graphique circulaire pour l'ancienneté des logements -->
+    <div class="chart-container">
+        <div class="chart-title">Répartition des Logements par Ancienneté</div>
+        <canvas id="graphAnciennetePie"></canvas>
+    </div>
+
+    <!-- Graphique en barres pour le nombre de décès par province -->
+    <div class="chart-container">
+        <div class="chart-title">Nombre de Décès par Province</div>
+        <canvas id="graphProvinces"></canvas>
+    </div>
+
+    <!-- Nouveau graphique en barres pour les bâtiments détruits vs non détruits -->
+    <div class="chart-container">
+        <div class="chart-title">Nombre de Bâtiments Détruits vs Non Détruits</div>
+        <canvas id="graphBuildings"></canvas>
+    </div>
+
+    <!-- Nouveau graphique pour les équipements de base -->
+    <div class="chart-container">
+        <div class="chart-title">Équipements de Base du Logement</div>
+        <canvas id="graphEquipements"></canvas>
+    </div>
+
+    <!-- Nouveau graphique pour les matériaux de construction du toit -->
+    <div class="chart-container">
+        <div class="chart-title">Matériaux de Construction du Toit</div>
+        <canvas id="graphMateriauxToit"></canvas>
+    </div>
+
+    <!-- Nouveau graphique pour les statistiques d'Al Haouz - Urbain vs Rural par sexe -->
+    <div class="chart-container">
+        <div class="chart-title">Statistiques d'Al Haouz (Urbain vs Rural)</div>
+        <canvas id="graphAlHaouzSexe"></canvas>
+    </div>
+
+    <script>
+        // Données pour le graphique circulaire de l'ancienneté des logements
+        const ancienneteLabels = ['Moins de 10 ans', '10-19 ans', '20-49 ans', '50 ans et plus'];
+        const ancienneteData = [23.1, 18.1, 24.3, 34.5];
+
+        // Graphique circulaire - Ancienneté des logements
+        const ctx1 = document.getElementById('graphAnciennetePie').getContext('2d');
+        const graphAnciennetePie = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: ancienneteLabels,
+                datasets: [{
+                    label: 'Ancienneté des logements',
+                    data: ancienneteData,
+                    backgroundColor: ['#58D68D', '#F4D03F', '#E67E22', '#F1948A'],
+                    borderColor: '#FFFFFF',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            color: '#2c3e50'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return tooltipItem.label + ": " + tooltipItem.raw + "%";
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            }
+        });
+
+        // Données pour le graphique des provinces (nombre de décès)
+        const provinces = ["Al Haouz", "Taroudant", "Chichaoua", "Ouarzazate", "Marrakech", "Azilal", "Grand-Casablanca", "Tinghir", "Youssoufia"];
+        const deces = [1684, 980, 202, 38, 18, 11, 3, 1, 1];
+
+        // Graphique - Nombre de décès par province
+        const ctx2 = document.getElementById('graphProvinces').getContext('2d');
+        const graphProvinces = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: provinces,
+                datasets: [{
+                    label: 'Nombre de décès',
+                    data: deces,
+                    backgroundColor: '#FF5733',
+                    borderColor: '#C0392B',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Données pour le graphique des bâtiments (détruits vs non détruits)
+        const buildingStatus = ['Détruits', 'Non Détruits'];
+        const buildingCounts = [32523, 408723];
+
+        // Graphique en barres pour les bâtiments détruits vs non détruits
+        const ctx3 = document.getElementById('graphBuildings').getContext('2d');
+        const graphBuildings = new Chart(ctx3, {
+            type: 'bar',
+            data: {
+                labels: buildingStatus,
+                datasets: [{
+                    label: 'Nombre de bâtiments',
+                    data: buildingCounts,
+                    backgroundColor: ['#FF5733', '#28B463'],
+                    borderColor: '#2C3E50',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Données pour les équipements de base du logement
+        const equipementsLabels = ['Cuisine', 'W.C', 'Bain', 'Électricité', 'Eau courante'];
+        const equipementsData = [95.1, 85.5, 61, 93.3, 80.5];
+
+        // Graphique en barres pour les équipements de base
+        const ctx4 = document.getElementById('graphEquipements').getContext('2d');
+        const graphEquipements = new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: equipementsLabels,
+                datasets: [{
+                    label: 'Pourcentage d\'équipements de base',
+                    data: equipementsData,
+                    backgroundColor: ['#3498db', '#e74c3c', '#f39c12', '#2ecc71', '#9b59b6'],
+                    borderColor: '#2C3E50',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        });
+
+        // Données pour les matériaux de construction du toit
+        const materiauxLabels = ['Planches de bois/Tuiles', 'Tôle en ciment/Tôle en étain', 'Recouverts de terre', 'Autres'];
+        const materiauxData = [36.5, 4.2, 58.7, 0.3];
+
+        // Graphique en barres pour les matériaux de construction du toit
+        const ctx5 = document.getElementById('graphMateriauxToit').getContext('2d');
+        const graphMateriauxToit = new Chart(ctx5, {
+            type: 'bar',
+            data: {
+                labels: materiauxLabels,
+                datasets: [{
+                    label: 'Matériaux de construction du toit',
+                    data: materiauxData,
+                    backgroundColor: ['#1abc9c', '#f39c12', '#3498db', '#9b59b6'],
+                    borderColor: '#2C3E50',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        });
+
+        // Données pour les statistiques d'Al Haouz (Urbain vs Rural par sexe)
+        const alHaouzLabels = ['Hommes Urbains', 'Femmes Urbaines', 'Hommes Ruraux', 'Femmes Rurales'];
+        const alHaouzData = [79.9, 10.2, 75.6, 17.6, 80.7, 8.8]; // Valeurs pour hommes/femmes urbains/ruraux
+
+        // Graphique en barres pour les statistiques d'Al Haouz
+        const ctx6 = document.getElementById('graphAlHaouzSexe').getContext('2d');
+        const graphAlHaouzSexe = new Chart(ctx6, {
+            type: 'bar',
+            data: {
+                labels: alHaouzLabels,
+                datasets: [{
+                    label: 'Statistiques Al Haouz (Urbain vs Rural)',
+                    data: alHaouzData,
+                    backgroundColor: ['#2980b9', '#e74c3c', '#3498db', '#9b59b6'],
+                    borderColor: '#2C3E50',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10
+                        }
+                    }
+                }
+            }
+        });
+
+    </script>
+
+</body>
+</html>

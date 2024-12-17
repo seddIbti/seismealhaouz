@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landing Page - Carte des Zones Touchées</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Inclure Chart.js -->
+    <style>
+        /* Style de la landing page */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+            transition: background-image 1s ease-in-out; /* Transition fluide pour le changement d'image */
+        }
+
+        #landingPage {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Style pour le bouton */
+        #enterButton {
+            background-color: #3c3c3c;
+            border: none;
+            padding: 15px;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 200px;
+            align-self: center;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #enterButton:hover {
+            background-color: #323232;
+        }
+
+        #landingPageFooter {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            text-align: center;
+            margin-top: auto;
+        }
+
+     
+    /* Style pour le conteneur des graphiques */
+    #chartsContainer {
+        display: flex; /* Utilisation du flexbox pour aligner horizontalement */
+        justify-content: space-between; /* Espacement égal entre les graphiques */
+        /* width: 60%; Garder la largeur du conteneur à 20% */
+        height: 250px;
+        /* max-width: 800px; Largeur maximale */
+        margin: 20px auto; /* Centrer le conteneur */
+        background-color: rgba(0, 0, 0, 0.8); /* Fond noir opaque */
+        border-radius: 10px;
+        padding: 10px; /* Réduire le padding pour compacter davantage */
+    }
+
+    canvas {
+        flex: 1;  /* Chaque graphique occupe un espace égal */
+        /* height: 50px;  Réduire la hauteur des graphiques */
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Ajout d'ombre pour améliorer la visibilité */
+        border-radius: 8px; /* Arrondir les coins des graphiques */
+    }
+
+
+        /* Pour le bouton qui vient après les graphiques */
+        #buttonContainer {
+            margin-top: 30px;
+        }
+
+              /* Style pour le titre */
+              #title {
+            font-size: 2.5em;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); /* Ombre portée pour améliorer la lisibilité */
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landingPage">
+        <div id="title">
+            Suivi des Zones Touchées - El Haouz
+        </div>
+        <!-- Conteneur pour les graphiques horizontalement -->
+        <div id="chartsContainer">
+            <canvas id="lineChart"></canvas> <!-- Graphique en ligne -->
+            <canvas id="barChart"></canvas> <!-- Graphique en barres -->
+            <canvas id="pieChart"></canvas> <!-- Graphique en secteurs -->
+        </div>
+
+        <!-- Conteneur pour le bouton après les graphiques -->
+        <div id="buttonContainer">
+            <button id="enterButton">Accéder à la Carte</button>
+        </div>
+
+        <div id="landingPageFooter">
+            <p>&copy; 2024 GéoAnalytique - Province El Haouz</p>
+        </div>
+    </div>
+
+    <script>
+        // Liste des images pour le fond dynamique
+        const images = [
+            './img/img1.jpg',
+            './img/img2.jpg',
+            './img/img3.jpg',
+            './img/img4.jpg',
+        ];
+
+        let currentImageIndex = 0;
+
+        // Fonction pour changer l'image de fond
+        function changeBackgroundImage() {
+            document.body.style.backgroundImage = `url(${images[currentImageIndex]})`;
+            document.body.style.transition = 'background-image 1s ease-in-out';
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+        }
+
+        // Changer l'image toutes les 5 secondes
+        setInterval(changeBackgroundImage, 5000);
+        changeBackgroundImage(); // Initialisation
+
+        // Lorsque l'utilisateur clique sur le bouton "Accéder à la Carte"
+        document.getElementById('enterButton').addEventListener('click', function() {
+            window.location.href = 'index4.html';  // Redirection vers page1.html
+        });
+
+        // Données pour le graphique en ligne
+        const lineChartData = {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            datasets: [{
+                label: 'Nombre de zones touchées',
+                data: [10, 15, 8, 12, 20, 17],
+                borderColor: 'rgba(255, 255, 255, 1)',  /* Couleur blanche */
+                backgroundColor: 'rgba(255, 255, 255, 0.2)', /* Couleur blanche claire */
+                tension: 0.1,
+            }]
+        };
+
+        // Configurer le graphique en ligne
+        const lineChartConfig = {
+            type: 'line',
+            data: lineChartData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        };
+
+        // Créer le graphique en ligne
+        const lineChart = new Chart(
+            document.getElementById('lineChart'),
+            lineChartConfig
+        );
+
+        // Données pour le graphique en barres
+        const barChartData = {
+            labels: ['Zone A', 'Zone B', 'Zone C', 'Zone D'],
+            datasets: [{
+                label: 'Nombre de cas',
+                data: [30, 45, 25, 40],
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',  /* Couleur blanche transparente */
+                borderColor: 'rgba(255, 255, 255, 1)',  /* Couleur blanche */
+                borderWidth: 1
+            }]
+        };
+
+        // Configurer le graphique en barres
+        const barChartConfig = {
+            type: 'bar',
+            data: barChartData,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        };
+
+        // Créer le graphique en barres
+        const barChart = new Chart(
+            document.getElementById('barChart'),
+            barChartConfig
+        );
+
+        // Données pour le graphique en secteurs (pie chart)
+        const pieChartData = {
+            labels: ['Zone A', 'Zone B', 'Zone C'],
+            datasets: [{
+                label: 'Répartition des zones',
+                data: [40, 30, 30],
+                backgroundColor: ['rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.5)', 'rgba(255, 255, 255, 0.5)'], /* Couleur blanche */
+                borderColor: ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 1)'],
+                borderWidth: 1
+            }]
+        };
+
+        // Configurer le graphique en secteurs
+        const pieChartConfig = {
+            type: 'pie',
+            data: pieChartData,
+            options: {
+                responsive: true
+            }
+        };
+
+        // Créer le graphique en secteurs
+        const pieChart = new Chart(
+            document.getElementById('pieChart'),
+            pieChartConfig
+        );
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte GéoAnalytique - Zones Touchées</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <!-- Ajouter le style pour le géocodeur -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+        }
+
+        #menu {
+            width: 220px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            height: 100%;
+        }
+
+        #menu button {
+            background-color: #444;
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 1.1em;
+            width: 100%;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        #menu button:hover {
+            background-color: #555;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <button id="resetView">Réinitialiser la vue</button>
+        <button id="toggleDestroyed">Basculer bâtiments détruits</button>
+        <button id="toggleNonDestroyed">Basculer bâtiments non détruits</button>
+        <button id="showStatistics">Statistiques</button>
+        <p id="buildingCount"></p>
+        <p id="totalSurfaceDestroyed"></p>
+        <p id="queryResult"></p> <!-- Résultat de la requête -->
+    </div>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <!-- Ajouter le script pour le géocodeur -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <script>
+        // Initialiser la carte
+        const map = L.map('map').setView([31.367853, -8.244079], 10);
+
+        // Fonds de carte
+        const esriImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '&copy; Esri, OpenStreetMap contributors'
+        });
+
+        const openStreetMap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        });
+
+        const googleSatellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; Google Maps'
+        });
+
+        const googleTerrain = L.tileLayer('https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+            attribution: '&copy; Google Terrain'
+        });
+
+        // Ajouter une couche par défaut
+        esriImagery.addTo(map);
+
+        // Créer un contrôle pour basculer entre les fonds de carte
+        const baseMaps = {
+            "Esri Imagerie": esriImagery,
+            "OpenStreetMap": openStreetMap,
+            "Google Satellite": googleSatellite,
+            "Google Terrain": googleTerrain
+        };
+
+        L.control.layers(baseMaps).addTo(map);
+
+        // Ajouter un contrôle de géocodage
+        L.Control.geocoder({
+            collapsed: false,
+            position: 'topleft',
+            placeholder: 'Rechercher un lieu...',
+            errorMessage: 'Lieu introuvable'
+        }).addTo(map);
+
+        // Variables pour les couches GeoJSON et les données
+        let destroyedLayer, nonDestroyedLayer;
+        let destroyedData = null, nonDestroyedData = null;
+
+        // Fonction pour charger les données GeoJSON dans la zone visible
+        function loadGeoJSON(bounds) {
+            const bbox = bounds.toBBoxString(); // obtenir les coordonnées de la zone visible
+            const urlDestroyed = `./data/bat_dam.geojson?bbox=${bbox}`;
+            const urlNonDestroyed = `./data/bat_non_dam.geojson?bbox=${bbox}`;
+
+            // Charger GeoJSON bâtiments détruits
+            fetch(urlDestroyed)
+                .then(response => response.json())
+                .then(data => {
+                    destroyedData = data; // Sauvegarder les données pour les futures requêtes
+                    destroyedLayer.clearLayers(); // Effacer les anciennes couches
+                    L.geoJSON(data, { style: { color: "red", weight: 2 } }).addTo(destroyedLayer);
+                })
+                .catch(error => console.error("Erreur lors du chargement de bat_dam.geojson:", error));
+
+            // Charger GeoJSON bâtiments non détruits
+            fetch(urlNonDestroyed)
+                .then(response => response.json())
+                .then(data => {
+                    nonDestroyedData = data; // Sauvegarder les données pour les futures requêtes
+                    nonDestroyedLayer.clearLayers(); // Effacer les anciennes couches
+                    L.geoJSON(data, { style: { color: "green", weight: 2 } }).addTo(nonDestroyedLayer);
+                })
+                .catch(error => console.error("Erreur lors du chargement de bat_non_dam.geojson:", error));
+        }
+
+        // Initialiser les couches vides
+        destroyedLayer = L.layerGroup().addTo(map);
+        nonDestroyedLayer = L.layerGroup().addTo(map);
+
+        // Ajouter un écouteur d'événements pour charger les données à chaque mouvement de la carte
+        map.on('moveend', function() {
+            const bounds = map.getBounds(); // obtenir la zone visible de la carte
+            loadGeoJSON(bounds); // charger les données dans cette zone
+        });
+
+        // Charger les premières données (lors de l'initialisation)
+        loadGeoJSON(map.getBounds());
+
+        // Ajouter Leaflet Draw
+        const drawControl = new L.Control.Draw({
+            draw: { polygon: true, rectangle: true },
+            edit: false
+        });
+        map.addControl(drawControl);
+
+        // Écouter les événements de dessin
+        map.on(L.Draw.Event.CREATED, function (e) {
+            const drawnLayer = e.layer;
+            const drawnGeoJSON = drawnLayer.toGeoJSON();
+
+            // Optimisation: vérifier si les données sont déjà chargées
+            if (destroyedData && nonDestroyedData) {
+                // Requête spatiale avec Turf.js pour les bâtiments dans la zone du polygone
+                const destroyedInZone = turf.pointsWithinPolygon(destroyedData, drawnGeoJSON).features.length;
+                const nonDestroyedInZone = turf.pointsWithinPolygon(nonDestroyedData, drawnGeoJSON).features.length;
+
+                // Afficher les résultats
+                document.getElementById('queryResult').textContent = `Bâtiments détruits : ${destroyedInZone}, Non détruits : ${nonDestroyedInZone}`;
+            } else {
+                document.getElementById('queryResult').textContent = "Données non chargées, veuillez patienter...";
+            }
+
+            // Ajouter la couche dessinée à la carte
+            drawnLayer.addTo(map);
+        });
+
+        // Bouton réinitialiser
+        document.getElementById('resetView').addEventListener('click', () => {
+            map.setView([31.367853, -8.244079], 10);
+        });
+
+        // Boutons pour basculer les couches GeoJSON
+        document.getElementById('toggleDestroyed').addEventListener('click', () => {
+            toggleLayer(destroyedLayer);
+        });
+        document.getElementById('toggleNonDestroyed').addEventListener('click', () => {
+            toggleLayer(nonDestroyedLayer);
+        });
+
+        function toggleLayer(layer) {
+            if (map.hasLayer(layer)) {
+                map.removeLayer(layer);
+            } else {
+                map.addLayer(layer);
+            }
+        }
+
+        // Redirection vers une page dédiée aux statistiques
+        document.getElementById('showStatistics').addEventListener('click', function () {
+            window.location.href = 'stat.html'; // Correction de la faute de frappe "indow" => "window"
+        });
+    </script>
+</body>
+</html>
